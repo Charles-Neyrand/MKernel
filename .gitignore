@@ -56,3 +56,7 @@ dkms.conf
 *.elf
 *.img
 *.dump
+
+#dtb and dts
+*.dtb
+*.dts
