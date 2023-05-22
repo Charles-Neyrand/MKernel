@@ -1,13 +1,50 @@
 include generic_flags.mk
 
-src=
+srcs-y:= src/Entry.S $(wildcard src/io/UART/*.c) $(wildcard src/*.c) # entry.S $(wildcard src/memdump/*.c) $(wildcard src/cli/*.c) $(wildcard src/UART/*.c) $(wildcard src/memtest/*.c)
 
-all: clean
+# Convert .c and .S files to .o files in objs
+objs:=$(patsubst %.c,%.c.o,$(srcs-y))
+objs:=$(patsubst %.S,%.S.o,$(objs))
+
+.PHONY: all
+all: my_kernel.img my_kernel.dump pflash.bin
+	$(info BUILD COMPLETED)
+
+%.c.o: %.c
+	$(V)$(CC) $(CFLAGS) -g $^ -o $@
+
+%.S.o: %.S
+	$(V)$(AS) $(SFLAGS) $^ -o $@
+
+%.ld: %.lds
+	$(V)$(AS) $^ -o $@
+
+.PRECIOUS: %.elf
+%.elf: $(objs)
+	$(V)$(LD) $(LDFLAGS) $^ -o $@
+
+.PRECIOUS: %.dump
+%.dump: %.elf
+	$(V)$(OBJDUMP) -D $^ > $@
+
+.PRECIOUS: %.img
+%.img: %.elf
+	$(OBJCOPY) -O binary $< $@
+
+.PRECIOUS: pflash.bin
+pflash.bin: my_kernel.img
+	$(V)dd if=/dev/zero of=$@ bs=1M count=512
+	$(V)dd if=$< of=$@ conv=notrunc bs=1M count=20
+
+.PHONY: launch
+launch:
+	$(V)qemu-system-aarch64 -nographic -machine virt -cpu cortex-a72 -kernel pflash.bin -serial mon:stdio -m 2G -smp 4
+
+launch-dtb:
+	$(V)qemu-system-aarch64 -nographic -machine virt -cpu cortex-a72 -kernel pflash.bin -serial mon:stdio -m 2G -smp 4 -machine dumpdtb=qemu.dtb
 
 
+
+.PHONY: clean
 clean:
-	$(RM) *.o
-	$(RM) a.out
-
-
-.PHONY: clean all
+	rm -rf *.elf *.bin *.o */*.o */*/*.o *.img *.dump
