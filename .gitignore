@@ -50,3 +50,9 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+#img, elf, bin and dump
+*.bin
+*.elf
+*.img
+*.dump
