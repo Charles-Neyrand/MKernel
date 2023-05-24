@@ -1,6 +1,7 @@
 include generic_flags.mk
 
-srcs-y:= src/Entry.S $(wildcard src/io/UART/*.c) $(wildcard src/*.c) # entry.S $(wildcard src/memdump/*.c) $(wildcard src/cli/*.c) $(wildcard src/UART/*.c) $(wildcard src/memtest/*.c)
+src_exception:= src/exception/evt.S $(wildcard ./src/exception/*.c)
+srcs-y:= src/Entry.S $(wildcard src/io/UART/*.c) $(wildcard src/*.c) $(src_exception) # entry.S $(wildcard src/memdump/*.c) $(wildcard src/cli/*.c) $(wildcard src/UART/*.c) $(wildcard src/memtest/*.c)
 
 # Convert .c and .S files to .o files in objs
 objs:=$(patsubst %.c,%.c.o,$(srcs-y))
@@ -38,7 +39,11 @@ pflash.bin: my_kernel.img
 
 .PHONY: launch
 launch:
-	$(V)qemu-system-aarch64 -nographic -machine virt -cpu cortex-a72 -kernel pflash.bin -serial mon:stdio -m 2G -smp 4
+	$(V)qemu-system-aarch64 -nographic -machine virt -cpu cortex-a72 -kernel pflash.bin -serial mon:stdio -m 2G -smp 4 
+
+launch-debug:
+	$(V)qemu-system-aarch64 -nographic -machine virt -cpu cortex-a72 -kernel pflash.bin -serial mon:stdio -m 2G -smp 4 -d int,in_asm 
+
 
 launch-dtb:
 	$(V)qemu-system-aarch64 -nographic -machine virt -cpu cortex-a72 -kernel pflash.bin -serial mon:stdio -m 2G -smp 4 -machine dumpdtb=qemu.dtb
