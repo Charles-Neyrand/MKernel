@@ -3,5 +3,6 @@
 
 int kmain(void) {
 	puts("Hello World!");
+	asm volatile("svc #1");
 	while(1);
 }
